@@ -98,7 +98,7 @@ class AsagamiParser:
                     if pos != result.start():
                         rest_result = self.rest_exp.search(body, pos=pos, endpos=result.start())
                         if rest_result is not None:
-                            children.append(TextNode(rest_result['body']))
+                            children.append(TextNode(rest_result['body']))  # TODO: list kwargs support
                     inline_module_node = document.create_module_inline_node(**result.groupdict())
                     children.append(inline_module_node)
                     pos = result.end()
