@@ -1,7 +1,6 @@
-import typing as T
 import re
 
-from asagami import modules
+from . import modules
 from asagami.nodes import *
 
 
@@ -127,14 +126,3 @@ class AsagamiParser:
             )
 
         return parse_module_block
-
-
-def main():
-    parser = AsagamiParser()
-    document = parser.parse(open('test.ag').read())
-    print(document)
-    print(document.children)
-
-
-if __name__ == '__main__':
-    main()
