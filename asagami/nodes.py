@@ -54,10 +54,6 @@ class ModuleBlockNode(BlockNode):
         pass
 
 
-class InlineNode(Node):
-    pass
-
-
 class ModuleInlineNode(InlineNode):
     def __init__(self, value, kwargs):
         pass
