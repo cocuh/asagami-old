@@ -1,7 +1,16 @@
 import re
+import typing as T
 
 from . import modules
-from asagami.nodes import *
+from asagami.node import (
+    BlockNode,
+    TextNode,
+    LineBlockNode,
+    ModuleBlockNode,
+)
+from asagami.document import (
+    Document,
+)
 
 
 class AsagamiParser:

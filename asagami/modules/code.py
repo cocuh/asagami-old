@@ -1,6 +1,8 @@
-from asagami.nodes import (
+from asagami.node import (
     ModuleInlineNode,
     ModuleBlockNode,
+)
+from asagami.module import (
     InlineModule,
     BlockModule,
 )
