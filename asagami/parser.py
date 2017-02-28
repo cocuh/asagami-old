@@ -107,7 +107,12 @@ class AsagamiParser:
                         rest_result = self.rest_exp.search(body, pos=pos, endpos=result.start())
                         if rest_result is not None:
                             children.append(TextNode(rest_result['body']))  # TODO: list kwargs support
-                    inline_module_node = document.create_module_inline_node(**result.groupdict())
+                    module_data = {
+                        'module_name': result['module_name'],
+                        'value': result['value'],
+                        'kwargs': self.parse_module_inline_kwargs(result['kwargs']),
+                    }
+                    inline_module_node = document.create_module_inline_node(**module_data)
                     children.append(inline_module_node)
                     pos = result.end()
             node = LineBlockNode(children)
@@ -121,17 +126,27 @@ class AsagamiParser:
                 line[4:]  # indent removal
                 for line in body.splitlines()
                 ]
-            kwargs = []
+            kwargs = {}
             for idx, line in enumerate(body_lines):
                 result = self.module_kwargs_exp.search(line)
                 if result is None:
                     break
                 else:
-                    kwargs.append(
-                        (result['name'], result['value'])
-                    )
+                    assert result['name'] not in kwargs  # TODO: impl error message
+                    kwargs[result['name']] = result['value']
             return document.create_module_block_node(
                 module_name=module_name, value=value, body=body, kwargs=kwargs,
             )
 
         return parse_module_block
+
+    def parse_module_inline_kwargs(self, kwargs: T.Optional[str]):
+        if kwargs is None:
+            return {}
+        result = {}
+        for line in kwargs.strip('{}').split(','):
+            record = line.split(':')
+            assert len(record) == 2
+            key, value = list(map(lambda l:l.strip(), record))
+            result[key] = value
+        return result

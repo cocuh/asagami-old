@@ -13,7 +13,6 @@ hogehoge
 .. code
     .. lang: python
     .. schema: molokai
-    .. arg: [hoge, piyo]  
     print('hello youjo')
 
     hoge

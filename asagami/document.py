@@ -9,6 +9,7 @@ from asagami.node import (
     ModuleInlineNode,
     ModuleBlockNode,
 )
+from asagami.writer import Writer
 
 
 class DocumentClass:
@@ -39,3 +40,6 @@ class Document:
         node_class = module_class.node_class
         node = node_class(value=value, kwargs=kwargs)
         return node
+
+    def render(self, writer: Writer, mode: str):
+        pass

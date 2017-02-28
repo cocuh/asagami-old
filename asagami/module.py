@@ -8,17 +8,14 @@ from asagami.node import (
 
 
 class Module:
-    name: str = ''
-    node_class: Node = None
+    name: T.ClassVar[str] = ''
+    node_class: T.ClassVar[Node] = None
 
 
 class InlineModule(Module):
-    start_signature: T.Optional[str] = None
-    end_signature: T.Optional[str] = None
-    node_class: InlineNode = None
-
-    def __init__(self, value, kwargs):
-        pass
+    start_signature: T.ClassVar[T.Optional[str]] = None
+    end_signature: T.ClassVar[T.Optional[str]] = None
+    node_class: T.ClassVar[InlineNode]
 
 
 class BlockModule(Module):

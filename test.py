@@ -1,4 +1,5 @@
 from asagami.parser import AsagamiParser
+from asagami.writer import Writer
 
 
 def main():
@@ -6,6 +7,10 @@ def main():
     document = parser.parse(open('test.ag').read())
     print(document)
     print(document.children)
+
+    writer = Writer()
+    writer = document.render(writer, 'html')
+    print(writer.dump())
 
 
 if __name__ == '__main__':
