@@ -3,6 +3,8 @@ import typing as T
 from asagami.node import (
     ModuleInlineNode,
     ModuleBlockNode,
+    RenderStrategy,
+    Renderer,
 )
 from asagami.module import (
     InlineModule,
@@ -20,8 +22,13 @@ class CodeInlineNode(ModuleInlineNode):
     ):
         self.lang = lang
 
-    def render_html(self, writer: Writer):
-        writer.write(f'<code>{self.value}</code>')
+
+class CodeInlineRenderStrategy(RenderStrategy):
+    def render_html(self, renderer: Renderer, writer: Writer, node: CodeInlineNode):
+        writer.write(f'<code>{node.value}</code>')
+
+
+CodeInlineNode.render_strategy = CodeInlineRenderStrategy
 
 
 class CodeBlockNode(ModuleBlockNode):
@@ -34,6 +41,18 @@ class CodeBlockNode(ModuleBlockNode):
     ):
         self.lang = lang
         self.schema = schema
+
+
+class CodeBlockRenderStrategy(RenderStrategy):
+    def render_html(self, renderer: Renderer, writer: Writer, node: CodeBlockNode):
+        writer.write('<code>')
+        with writer.indent():
+            for line in node.body.splitlines():
+                writer.write(f'{line}')
+        writer.write('</code>')
+
+
+CodeBlockNode.render_strategy = CodeBlockRenderStrategy
 
 
 class CodeInlineModule(InlineModule):

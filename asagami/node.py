@@ -6,7 +6,7 @@ from asagami.writer import Writer
 
 class Node:
     name: T.ClassVar[str]
-    renderer: T.ClassVar[T.Type['Renderer']]
+    render_strategy: T.ClassVar[T.Type['RenderStrategy']]
 
     def __len__(self):
         '''
@@ -18,42 +18,53 @@ class Node:
 N = T.TypeVar('N')
 
 
-class Renderer(T.Generic[N]):
-    def __init__(self, document, env, render_mode):
+class Renderer:
+    def __init__(self, document):
+        self.render_strategy_cache = {}
+        self.env = {}
+        self.document = document
+
+    def render(self, node: Node, writer: Writer):
+        node_class = type(node)
+        if node_class not in self.render_strategy_cache:
+            render_strategy = node.render_strategy(self.document, self.env)
+            self.render_strategy_cache[node_class] = render_strategy
+        else:
+            render_strategy = self.render_strategy_cache[node_class]
+        render_strategy.render_html(self, writer, node)
+
+
+class RenderStrategy(T.Generic[N]):
+    def __init__(self, document, env):
         self.document = document
         self.env = env
 
-        render_method = {
-            'html': self.render_html,
-            'xml': self.render_xml,
-        }.get(render_mode, None)
-        if render_method is None:
-            raise ValueError('invalid render mode')
-        self.render = render_method
-
-    def render_html(self, writer: Writer, node: N):
+    def render_html(self, renderer: Renderer, writer: Writer, node: N):
         raise NotImplementedError
 
-    def render_xml(self, writer: Writer, node: N):
+    def render_xml(self, renderer: Renderer, writer: Writer, node: N):
         raise NotImplementedError
 
 
-class RootNode:
+class RootNode(Node):
     name: T.ClassVar[str] = 'root'
     children: T.List[Node]
 
-    def __init__(self):
-        self.children = []
+    def __init__(self, children: T.List[Node] = []):
+        self.children = children
 
     def add_child(self, child: Node):
         self.children.append(child)
 
 
-class RootNodeRenderer(Renderer[RootNode]):
-    def render_html(self, writer: Writer, node: RootNode):
-        with writer.indent:
+class RootNodeRenderStrategy(RenderStrategy[RootNode]):
+    def render_html(self, renderer: Renderer, writer: Writer, node: RootNode):
+        with writer.indent():
             for child in node.children:
-                child.render(writer)
+                renderer.render(child, writer)
+
+
+RootNode.render_strategy = RootNodeRenderStrategy
 
 
 class InlineNode(Node):
@@ -81,15 +92,16 @@ class LineBlockNode(BlockNode):
         return len(self.children)
 
 
-class LineBlockNodeRenderer(Renderer['LineBlockNode']):
-    def render_xml(self, writer: Writer, node: N):
-        writer.write('<LineBlockNode>')
-        with writer.indent:
-            pass
-        writer.write('</LineBlockNode>')
+class LineBlockNodeRenderStrategy(RenderStrategy[LineBlockNode]):
+    def render_html(self, renderer: Renderer, writer: Writer, node: LineBlockNode):
+        writer.write('<p>')
+        with writer.indent():
+            for child in node.children:
+                renderer.render(child, writer)
+        writer.write('</p>')
 
 
-LineBlockNode.renderer = LineBlockNodeRenderer
+LineBlockNode.render_strategy = LineBlockNodeRenderStrategy
 
 
 class ModuleBlockNode(BlockNode, metaclass=abc.ABCMeta):
@@ -124,12 +136,9 @@ class TextNode(Node):
         return self.text
 
 
-class TextNodeRenderer(Renderer[TextNode]):
-    def render_default(self, writer: Writer, node: TextNode):
+class TextNodeRenderStrategy(RenderStrategy[TextNode]):
+    def render_html(self, renderer: Renderer, writer: Writer, node: N):
         writer.write(node.text)
 
-    def render_html(self, writer: Writer, node: TextNode):
-        self.render_default(writer, node)
 
-    def render_xml(self, writer: Writer, node: TextNode):
-        self.render_default(writer, node)
+TextNode.render_strategy = TextNodeRenderStrategy

@@ -7,6 +7,7 @@ from asagami.node import (
     TextNode,
     LineBlockNode,
     ModuleBlockNode,
+    RootNode,
 )
 from asagami.document import (
     Document,
@@ -66,7 +67,8 @@ class AsagamiParser:
 
             block_list = sum(map(parse_block_if_possible, block_list), [])
         block_list = list(filter(lambda block: isinstance(block, BlockNode), block_list))
-        document.children = block_list
+        root = RootNode(block_list)
+        document.root = root
 
         return document
 
@@ -122,20 +124,23 @@ class AsagamiParser:
 
     def parser_factory_module_block(self, document: Document):
         def parse_module_block(module_name: str, value: str, body: str) -> ModuleBlockNode:
-            body_lines = [
+            input_lines = [
                 line[4:]  # indent removal
                 for line in body.splitlines()
                 ]
             kwargs = {}
-            for idx, line in enumerate(body_lines):
+            body_lines = []
+            for idx, line in enumerate(input_lines):
                 result = self.module_kwargs_exp.search(line)
                 if result is None:
-                    break
+                    body_lines.append(line)
                 else:
                     assert result['name'] not in kwargs  # TODO: impl error message
                     kwargs[result['name']] = result['value']
+            body_string = '\n'.join(body_lines).rstrip('\n')
             return document.create_module_block_node(
-                module_name=module_name, value=value, body=body, kwargs=kwargs,
+                module_name=module_name, value=value,
+                body=body_string, kwargs=kwargs,
             )
 
         return parse_module_block
@@ -147,6 +152,6 @@ class AsagamiParser:
         for line in kwargs.strip('{}').split(','):
             record = line.split(':')
             assert len(record) == 2
-            key, value = list(map(lambda l:l.strip(), record))
+            key, value = list(map(lambda l: l.strip(), record))
             result[key] = value
         return result

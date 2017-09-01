@@ -5,9 +5,9 @@ from asagami.module import (
     ModuleList,
 )
 from asagami.node import (
-    Node,
     ModuleInlineNode,
     ModuleBlockNode,
+    RootNode,
 )
 from asagami.writer import Writer
 
@@ -19,15 +19,11 @@ class DocumentClass:
 class Document:
     documentclass: DocumentClass
     modules: ModuleList
-    children: T.List[Node]
+    root: RootNode
 
     def __init__(self):
         self.documentclass = None
         self.modules = ModuleList()
-        self.children = []
-
-    def append_child(self, child):
-        self.children.append(child)
 
     def create_module_block_node(self, module_name, value, kwargs, body) -> ModuleBlockNode:
         module_class = self.modules.search_block_module(module_name)
@@ -40,6 +36,3 @@ class Document:
         node_class = module_class.node_class
         node = node_class(value=value, kwargs=kwargs)
         return node
-
-    def render(self, writer: Writer, mode: str):
-        pass
